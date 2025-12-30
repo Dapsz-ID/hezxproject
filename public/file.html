@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hezfile – Download</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+
+<div class="max-w-2xl mx-auto py-12 px-6">
+
+  <div class="bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-2xl p-6">
+
+    <h1 class="text-3xl font-bold mb-4">File Detail</h1>
+
+    <div id="meta"></div>
+
+    <div id="premiumBox" class="mt-4 hidden">
+      <input id="key" placeholder="Masukkan akses key" class="w-full mb-3 px-4 py-2 rounded-xl bg-slate-900/60 focus:outline-none" />
+      <button onclick="unlock()" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700">Buka Akses</button>
+    </div>
+
+    <div id="downloadBox" class="mt-4 hidden">
+      <a id="downloadLink" class="block text-center py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700">Download File</a>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const id = params.get('id');
+
+let isPremium = false;
+
+async function load() {
+  const res = await fetch(`/api/file/${id}`);
+  const data = await res.json();
+
+  isPremium = data.premium;
+
+  document.getElementById('meta').innerHTML = `
+    <p><b>Nama:</b> ${data.filename}</p>
+    <p><b>Ukuran:</b> ${Math.round(data.size / 1024)} KB</p>
+    <p><b>Tanggal:</b> ${new Date(data.createdAt).toLocaleString()}</p>
+    <p><b>Status:</b> ${data.premium ? 'Premium 🔒' : 'Gratis 🔓'}</p>
+  `;
+
+  if (data.premium) {
+    document.getElementById('premiumBox').classList.remove('hidden');
+  } else {
+    showDownload();
+  }
+}
+
+async function unlock() {
+  const key = document.getElementById('key').value;
+
+  const res = await fetch(`/api/file/${id}/access`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key })
+  });
+
+  const data = await res.json();
+
+  if (data.allowed) {
+    document.getElementById('premiumBox').classList.add('hidden');
+    document.getElementById('downloadLink').href = data.download;
+    document.getElementById('downloadBox').classList.remove('hidden');
+  } else {
+    alert('Key salah');
+  }
+}
+
+function showDownload() {
+  document.getElementById('downloadLink').href = `/api/download/${id}`;
+  document.getElementById('downloadBox').classList.remove('hidden');
+}
+
+load();
+</script>
+
+</body>
+</html>
