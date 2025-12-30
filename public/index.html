@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hezfile – Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+
+  <div class="max-w-3xl mx-auto py-12 px-6">
+    <h1 class="text-4xl font-bold text-center mb-8">hezfile – Admin Panel</h1>
+
+    <!-- Login Card -->
+    <div id="loginBox" class="bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-2xl p-6">
+      <h2 class="text-2xl font-semibold mb-4">Login Admin</h2>
+
+      <input id="user" placeholder="Username" class="w-full mb-3 px-4 py-2 rounded-xl bg-slate-900/60 focus:outline-none" />
+      <input id="pass" type="password" placeholder="Password" class="w-full mb-3 px-4 py-2 rounded-xl bg-slate-900/60 focus:outline-none" />
+
+      <button onclick="login()" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 transition">Login</button>
+
+      <p id="loginStatus" class="text-red-400 mt-3"></p>
+    </div>
+
+    <!-- Upload Card -->
+    <div id="uploadBox" class="hidden bg-slate-800/70 backdrop-blur-xl rounded-2xl shadow-2xl p-6 mt-6">
+      <h2 class="text-2xl font-semibold mb-4">Upload File</h2>
+
+      <input id="file" type="file" class="mb-3" />
+
+      <label class="flex items-center gap-3 mb-3">
+        <input id="premium" type="checkbox" /> Premium File
+      </label>
+
+      <input id="accessKey" placeholder="Akses Key (jika premium)" class="w-full mb-3 px-4 py-2 rounded-xl bg-slate-900/60 focus:outline-none" />
+
+      <button onclick="uploadFile()" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 transition">Upload</button>
+
+      <div id="result" class="mt-4"></div>
+    </div>
+
+  </div>
+
+<script>
+let adminLogged = false;
+
+async function login() {
+  const username = document.getElementById('user').value;
+  const password = document.getElementById('pass').value;
+
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    adminLogged = true;
+    document.getElementById('loginBox').classList.add('hidden');
+    document.getElementById('uploadBox').classList.remove('hidden');
+  } else {
+    document.getElementById('loginStatus').innerText = 'Login gagal';
+  }
+}
+
+async function uploadFile() {
+  const f = document.getElementById('file').files[0];
+  const premium = document.getElementById('premium').checked;
+  const accessKey = document.getElementById('accessKey').value;
+
+  const formData = new FormData();
+  formData.append('file', f);
+  formData.append('premium', premium);
+  formData.append('accessKey', accessKey);
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = await res.json();
+
+  document.getElementById('result').innerHTML = `
+    <p class='mt-2'>Upload sukses!</p>
+    <p>URL: <span class='text-indigo-400'>${location.origin}${data.downloadUrl}</span></p>
+  `;
+}
+</script>
+</body>
+</html>
